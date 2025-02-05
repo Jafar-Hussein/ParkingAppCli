@@ -3,16 +3,22 @@ import '../model/Person.dart';
 import '../repository/PersonRepo.dart';
 
 Future<void> managePersons(PersonRepo personRepo) async {
+  //hub för att koppla allting tillsammans
+
+  //skpara en boolean för att kontrollera while loopen
   bool back = false;
+
   while (!back) {
     print("Du har valt att hantera personer. Vad vill du göra?");
     printMenu();
     var input = stdin.readLineSync();
+    // userChoice returnerar boolean om användaren inte matar in 5 då fortsätter loopen
     back = await userChoice(input, personRepo);
   }
 }
 
 Future<bool> userChoice(var userInput, PersonRepo personRepo) async {
+  // en switcase som för att hantera användarens val
   switch (userInput) {
     case "1":
       await addPerson(personRepo);
@@ -35,12 +41,16 @@ Future<bool> userChoice(var userInput, PersonRepo personRepo) async {
 }
 
 deletePerson(PersonRepo personRepo) async {
+  //hämtar ut information först så att användaren vet vilka val de har
   await viewAllPersons(personRepo);
+  //ber användaren att mata in id för att ta bort personen
   stdout.write('\nAnge id för att ta bort');
 
   String? idInput = stdin.readLineSync();
   // konverterar idInput till int variabel
   int? id = int.tryParse(idInput ?? '');
+
+  //om id inte är null då tas personen bort
   if (id != null) {
     await personRepo.deleteById(id);
   } else {
@@ -59,7 +69,7 @@ updatePerson(PersonRepo personRepo) async {
     return;
   }
 
-  // Fetch the person's information by ID
+  // hämtar personens ifnormation med från id
   var currentPerson = await personRepo.getById(id);
   if (currentPerson == null) {
     print('Ingen person hittades med id $id');
@@ -70,7 +80,7 @@ updatePerson(PersonRepo personRepo) async {
   print("Namn: ${currentPerson.namn}");
   print("Personnummer: ${currentPerson.personnummer}");
 
-  // Get new person information
+  // hämta nya person information
   stdout.write('Ange nytt namn (lämna tom om du vill behålla samma namn): ');
   String? newName = stdin.readLineSync();
   stdout.write(
@@ -83,16 +93,17 @@ updatePerson(PersonRepo personRepo) async {
       : newPersonnummer;
 
   Person updatedPerson = Person(
-      id: currentPerson.id, // Keep the same ID
-      namn: newName!,
-      personnummer: newPersonnummer!);
+      id: currentPerson.getId, namn: newName!, personnummer: newPersonnummer!);
 
   await personRepo.updatePerson(updatedPerson);
   print('Person updaterades.');
 }
 
 viewAllPersons(PersonRepo personRepo) async {
+  //sparar alla personer i en lista
   List<Person> persons = await personRepo.getAll();
+
+  //skriver ut listan av användare
   persons.forEach((person) {
     print(
         'ID: ${person.id}, Name: ${person.namn}, Personnummer: ${person.personnummer}');
@@ -100,11 +111,13 @@ viewAllPersons(PersonRepo personRepo) async {
 }
 
 addPerson(PersonRepo personRepo) async {
-  stdout.write("Ange namn ");
+  //ber användaren att skriva in information
+  stdout.write("\nAnge namn ");
   String? name = stdin.readLineSync();
   stdout.write("Ange personnummer");
   String? personnummer = stdin.readLineSync();
 
+  // kollar om användarens information är tom
   if (name != null && personnummer != null) {
     Person person = Person(id: 0, namn: name, personnummer: personnummer);
     await personRepo.addPerson(person);
@@ -113,7 +126,8 @@ addPerson(PersonRepo personRepo) async {
   }
 }
 
-void printMenu() {
+printMenu() {
+  // skapar en array av menyn eftersom den kommer aldrg ändras
   var options = [
     "1. Skapa person",
     "2. Visa alla Personer",
@@ -121,7 +135,7 @@ void printMenu() {
     "4. Ta bort Person",
     "5. Gå tillbaka till huvudmeny"
   ];
-
+  // skriver ut menyn
   for (var i = 0; i < options.length; i++) {
     print(options[i]);
   }
