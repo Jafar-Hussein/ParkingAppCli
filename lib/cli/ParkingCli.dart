@@ -1,142 +1,194 @@
 import 'dart:io';
+import '../model/Parking.dart';
+import '../repository/ParkingRepo.dart';
+import '../model/Vehicle.dart';
+import '../repository/VehicleRepo.dart';
+import '../model/ParkingSpace.dart';
+import '../repository/ParkingSpaceRepo.dart';
 import '../model/Person.dart';
-import '../repository/PersonRepo.dart';
 
-Future<void> managePersons(PersonRepo personRepo) async {
-  //hub för att koppla allting tillsammans
-
-  //skpara en boolean för att kontrollera while loopen
+void manageParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+    ParkingSpaceRepo parkingSpaceRepo) {
   bool back = false;
 
   while (!back) {
-    print("Du har valt att hantera personer. Vad vill du göra?");
-    printMenu();
+    print("\nDu har valt att hantera parkeringar. Vad vill du göra?");
+    printParkingMenu();
     var input = stdin.readLineSync();
-    // userChoice returnerar boolean om användaren inte matar in 5 då fortsätter loopen
-    back = await userChoice(input, personRepo);
+    back = userParkingChoice(input, parkingRepo, vehicleRepo, parkingSpaceRepo);
   }
 }
 
-Future<bool> userChoice(var userInput, PersonRepo personRepo) async {
-  // en switcase som för att hantera användarens val
+bool userParkingChoice(String? userInput, ParkingRepo parkingRepo,
+    VehicleRepo vehicleRepo, ParkingSpaceRepo parkingSpaceRepo) {
   switch (userInput) {
     case "1":
-      await addPerson(personRepo);
+      addParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
       return false;
     case "2":
-      await viewAllPersons(personRepo);
+      viewAllParkings(parkingRepo);
       return false;
     case "3":
-      await updatePerson(personRepo);
+      updateParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
       return false;
     case "4":
-      await deletePerson(personRepo);
+      deleteParking(parkingRepo);
       return false;
     case "5":
-      return true; // Gå tillbaka till huvudmenyn
+      return true; // Exit to the main menu
     default:
       print("Ogiltigt alternativ, försök igen.");
       return false;
   }
 }
 
-deletePerson(PersonRepo personRepo) async {
-  //hämtar ut information först så att användaren vet vilka val de har
-  await viewAllPersons(personRepo);
-  //ber användaren att mata in id för att ta bort personen
-  stdout.write('\nAnge id för att ta bort');
-
-  String? idInput = stdin.readLineSync();
-  // konverterar idInput till int variabel
-  int? id = int.tryParse(idInput ?? '');
-
-  //om id inte är null då tas personen bort
-  if (id != null) {
-    await personRepo.deleteById(id);
-  } else {
-    print("Ogiltigt alternativ, försök igen.");
-  }
-}
-
-updatePerson(PersonRepo personRepo) async {
-  await viewAllPersons(personRepo);
-  stdout.write('\nAnge id för att uppdatera: ');
-  String? idInput = stdin.readLineSync();
-  int? id = int.tryParse(idInput ?? '');
-
-  if (id == null) {
-    print("Ogiltigt id, försök igen.");
+void addParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+    ParkingSpaceRepo parkingSpaceRepo) {
+  stdout.write("\nAnge fordonets ID: ");
+  int? vehicleId = int.tryParse(stdin.readLineSync() ?? '');
+  if (vehicleId == null) {
+    print("Ogiltigt ID. Försök igen.");
     return;
   }
 
-  // hämtar personens ifnormation med från id
-  var currentPerson = await personRepo.getById(id);
-  if (currentPerson == null) {
-    print('Ingen person hittades med id $id');
+  Vehicle? vehicle = vehicleRepo.getById(vehicleId);
+  if (vehicle == null) {
+    print("Inget fordon hittades med ID $vehicleId");
     return;
   }
 
-  print("Nuvarande detaljer:");
-  print("Namn: ${currentPerson.namn}");
-  print("Personnummer: ${currentPerson.personnummer}");
+  stdout.write("🅿️ Ange parkeringsplatsens ID: ");
+  int? parkingSpaceId = int.tryParse(stdin.readLineSync() ?? '');
+  if (parkingSpaceId == null) {
+    print("Ogiltigt ID. Försök igen.");
+    return;
+  }
 
-  // hämta nya person information
-  stdout.write('Ange nytt namn (lämna tom om du vill behålla samma namn): ');
-  String? newName = stdin.readLineSync();
+  ParkingSpace? parkingSpace = parkingSpaceRepo.getById(parkingSpaceId);
+  if (parkingSpace == null) {
+    print("Ingen parkeringsplats hittades med ID $parkingSpaceId");
+    return;
+  }
+
+  stdout.write("⏳ Ange starttid (yyyy-mm-dd hh:mm): ");
+  DateTime startTime;
+  try {
+    startTime =
+        DateTime.parse(stdin.readLineSync() ?? DateTime.now().toString());
+  } catch (e) {
+    print("❌ Ogiltigt datumformat. Ange i formatet yyyy-mm-dd hh:mm.");
+    return;
+  }
+
   stdout.write(
-      'Ange nytt personnummer (lämna tom om du vill behålla samma personnummer): ');
-  String? newPersonnummer = stdin.readLineSync();
+      "⏳ Ange sluttid (yyyy-mm-dd hh:mm) eller lämna tom för nuvarande parkeringar: ");
+  String? endTimeInput = stdin.readLineSync();
+  DateTime? endTime;
+  if (endTimeInput != null && endTimeInput.isNotEmpty) {
+    try {
+      endTime = DateTime.parse(endTimeInput);
+    } catch (e) {
+      print("❌ Ogiltigt datumformat. Ange i formatet yyyy-mm-dd hh:mm.");
+      return;
+    }
+  }
 
-  newName = (newName?.isEmpty ?? true) ? currentPerson.namn : newName;
-  newPersonnummer = (newPersonnummer?.isEmpty ?? true)
-      ? currentPerson.personnummer
-      : newPersonnummer;
+  // Generate a unique ID for the new parking entry
+  int newId = parkingRepo.getAllParkings().isEmpty
+      ? 1
+      : parkingRepo
+              .getAllParkings()
+              .map((p) => p.id)
+              .reduce((a, b) => a > b ? a : b) +
+          1;
 
-  Person updatedPerson = Person(
-      id: currentPerson.getId, namn: newName!, personnummer: newPersonnummer!);
+  Parking newParking = Parking(
+      id: newId,
+      vehicle: vehicle,
+      parkingSpace: parkingSpace,
+      startTime: startTime,
+      endTime: endTime);
 
-  await personRepo.updatePerson(updatedPerson);
-  print('Person updaterades.');
+  parkingRepo.addParking(newParking);
+  print("✅ Ny parkering tillagd: ID ${newParking.id}");
 }
 
-viewAllPersons(PersonRepo personRepo) async {
-  //sparar alla personer i en lista
-  List<Person> persons = await personRepo.getAll();
-
-  //skriver ut listan av användare
-  persons.forEach((person) {
-    print(
-        'ID: ${person.id}, Name: ${person.namn}, Personnummer: ${person.personnummer}');
-  });
-}
-
-addPerson(PersonRepo personRepo) async {
-  //ber användaren att skriva in information
-  stdout.write("\nAnge namn ");
-  String? name = stdin.readLineSync();
-  stdout.write("Ange personnummer");
-  String? personnummer = stdin.readLineSync();
-
-  // kollar om användarens information är tom
-  if (name != null && personnummer != null) {
-    Person person = Person(id: 0, namn: name, personnummer: personnummer);
-    await personRepo.addPerson(person);
+void viewAllParkings(ParkingRepo parkingRepo) {
+  List<Parking> parkings = parkingRepo.getAllParkings();
+  if (parkings.isEmpty) {
+    print("ℹ️ Inga parkeringar hittades.");
   } else {
-    print("Ogiltigt alternativ, försök igen.");
+    print("\n📜 Lista över alla parkeringar:");
+    for (var parking in parkings) {
+      print('🆔 Parking ID: ${parking.id}, '
+          '🚗 Registreringsnummer: ${parking.vehicle.registreringsnummer}, '
+          '🅿️ Parkeringsplats: ${parking.parkingSpace.address}, '
+          '⏳ Start: ${parking.startTime}, '
+          '⏳ Slut: ${parking.endTime ?? "Pågående"}');
+    }
   }
 }
 
-printMenu() {
-  // skapar en array av menyn eftersom den kommer aldrg ändras
-  var options = [
-    "1. Skapa person",
-    "2. Visa alla Personer",
-    "3. Updatera Person",
-    "4. Ta bort Person",
-    "5. Gå tillbaka till huvudmeny"
-  ];
-  // skriver ut menyn
-  for (var i = 0; i < options.length; i++) {
-    print(options[i]);
+void updateParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+    ParkingSpaceRepo parkingSpaceRepo) {
+  stdout.write("✏️ Ange ID på parkeringen du vill uppdatera: ");
+  int? id = int.tryParse(stdin.readLineSync() ?? '');
+  if (id == null) {
+    print("❌ Ogiltigt ID.");
+    return;
   }
+
+  Parking? existingParking = parkingRepo.getParkingById(id);
+  if (existingParking == null) {
+    print("❌ Ingen parkering hittades med ID $id.");
+    return;
+  }
+
+  stdout.write("🚗 Ange nytt fordonets ID (${existingParking.vehicle.id}): ");
+  int? newVehicleId = int.tryParse(stdin.readLineSync() ?? '');
+  if (newVehicleId != null) {
+    Vehicle? newVehicle = vehicleRepo.getById(newVehicleId);
+    if (newVehicle != null) {
+      existingParking.vehicle = newVehicle;
+    }
+  }
+
+  stdout.write(
+      "🅿️ Ange ny parkeringsplatsens ID (${existingParking.parkingSpace.id}): ");
+  int? newParkingSpaceId = int.tryParse(stdin.readLineSync() ?? '');
+  if (newParkingSpaceId != null) {
+    ParkingSpace? newParkingSpace = parkingSpaceRepo.getById(newParkingSpaceId);
+    if (newParkingSpace != null) {
+      existingParking.parkingSpace = newParkingSpace;
+    }
+  }
+
+  parkingRepo.updateParking(id, existingParking);
+  print("✅ Parkering uppdaterad.");
+}
+
+void deleteParking(ParkingRepo parkingRepo) {
+  stdout.write("Ange ID på parkeringen du vill ta bort: ");
+  int? id = int.tryParse(stdin.readLineSync() ?? '');
+  if (id == null) {
+    print("Ogiltigt ID.");
+    return;
+  }
+
+  if (parkingRepo.getParkingById(id) == null) {
+    print("Ingen parkering hittades med ID $id.");
+    return;
+  }
+
+  parkingRepo.deleteParking(id);
+  print("🗑️ Parkering borttagen.");
+}
+
+void printParkingMenu() {
+  print("\nMENY:");
+  print("1️ Lägg till parkering");
+  print("2️ Visa alla parkeringar");
+  print("3️ Uppdatera parkering");
+  print("4️ Ta bort parkering");
+  print("5️ Återgå till huvudmenyn");
 }
