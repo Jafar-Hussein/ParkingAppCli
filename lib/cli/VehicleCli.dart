@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firstapp/util/Input.dart';
+import 'package:firstapp/util/MenuUtil.dart';
 import '../model/Vehicle.dart';
 import '../repository/VehicleRepo.dart';
 import '../model/Person.dart';
@@ -7,22 +8,28 @@ import '../repository/PersonRepo.dart';
 
 class VehicleCli {
   Input userInput = Input();
+  MenuUtil menuUtil = new MenuUtil();
 
-  void manageVehicles(VehicleRepo vehicleRepo, PersonRepo personRepo) {
+  Future<void> manageVehicles(
+      VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     bool back = false;
 
     while (!back) {
       print("\nDu har valt att hantera fordon. Vad vill du göra?");
-      printVehicleMenu();
+      menuUtil.printVehicleMenu();
       var input = userInput.getUserInput();
-      back = userVehicleChoice(input, vehicleRepo, personRepo);
+
+      if (await userVehicleChoice(input, vehicleRepo, personRepo)) {
+        break; // ✅ Exits the loop when "5" is pressed
+      }
     }
   }
 
-  bool userVehicleChoice(String? userInput, VehicleRepo vehicleRepo, PersonRepo personRepo) {
+  Future<bool> userVehicleChoice(
+      String? userInput, VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     switch (userInput) {
       case "1":
-        addVehicle(vehicleRepo, personRepo);
+        await addVehicle(vehicleRepo, personRepo);
         return false;
       case "2":
         viewAllVehicles(vehicleRepo);
@@ -41,7 +48,8 @@ class VehicleCli {
     }
   }
 
-  void addVehicle(VehicleRepo vehicleRepo, PersonRepo personRepo) {
+  Future<void> addVehicle(
+      VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     stdout.write("\nAnge registreringsnummer: ");
     String regNumber = userInput.getUserInput();
     if (regNumber.isEmpty) {
@@ -72,11 +80,17 @@ class VehicleCli {
     // Generate a unique ID
     int newId = vehicleRepo.getAllVehicles().isEmpty
         ? 1
-        : vehicleRepo.getAllVehicles().map((v) => v.id).reduce((a, b) => a > b ? a : b) + 1;
+        : vehicleRepo
+                .getAllVehicles()
+                .map((v) => v.id)
+                .reduce((a, b) => a > b ? a : b) +
+            1;
 
-    Vehicle newVehicle = Vehicle(id: newId, registreringsnummer: regNumber, type: type, owner: owner);
+    Vehicle newVehicle = Vehicle(
+        id: newId, registreringsnummer: regNumber, type: type, owner: owner);
     vehicleRepo.addVehicle(newVehicle);
-    print("Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
+    print(
+        "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
   }
 
   void viewAllVehicles(VehicleRepo vehicleRepo) {
@@ -106,7 +120,8 @@ class VehicleCli {
       return;
     }
 
-    stdout.write("Ange nytt registreringsnummer (${existingVehicle.registreringsnummer}): ");
+    stdout.write(
+        "Ange nytt registreringsnummer (${existingVehicle.registreringsnummer}): ");
     String newRegNumber = userInput.getUserInput();
     if (newRegNumber.isEmpty) {
       newRegNumber = existingVehicle.registreringsnummer;
@@ -129,7 +144,11 @@ class VehicleCli {
       }
     }
 
-    Vehicle updatedVehicle = Vehicle(id: existingVehicle.id, registreringsnummer: newRegNumber, type: newType, owner: newOwner);
+    Vehicle updatedVehicle = Vehicle(
+        id: existingVehicle.id,
+        registreringsnummer: newRegNumber,
+        type: newType,
+        owner: newOwner);
     vehicleRepo.updateVehicle(id, updatedVehicle);
     print("Fordon uppdaterat.");
   }
@@ -149,14 +168,5 @@ class VehicleCli {
 
     vehicleRepo.deleteVehicle(id);
     print("Fordon borttaget.");
-  }
-
-  void printVehicleMenu() {
-    print("\nMENY:");
-    print("1. Lägg till fordon");
-    print("2. Visa alla fordon");
-    print("3. Uppdatera fordon");
-    print("4. Ta bort fordon");
-    print("5. Återgå till huvudmenyn");
   }
 }

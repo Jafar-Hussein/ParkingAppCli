@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firstapp/util/Input.dart';
+import 'package:firstapp/util/MenuUtil.dart';
 
 import '../model/Parking.dart';
 import '../repository/ParkingRepo.dart';
@@ -10,35 +11,36 @@ import '../repository/ParkingSpaceRepo.dart';
 import '../model/Person.dart';
 
 class ParkingCli {
-  Input userInput = new Input();
+  Input userInput = Input();
+  MenuUtil menuUtil = MenuUtil();
 
-  void manageParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
-      ParkingSpaceRepo parkingSpaceRepo) {
+  Future<void> manageParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+      ParkingSpaceRepo parkingSpaceRepo) async {
     bool back = false;
 
     while (!back) {
       print("\nDu har valt att hantera parkeringar. Vad vill du göra?");
-      printParkingMenu();
+      menuUtil.printParkingMenu();
       var input = userInput.getUserInput();
-      back =
-          userParkingChoice(input, parkingRepo, vehicleRepo, parkingSpaceRepo);
+      back = await userParkingChoice(
+          input, parkingRepo, vehicleRepo, parkingSpaceRepo);
     }
   }
 
-  bool userParkingChoice(String? userInput, ParkingRepo parkingRepo,
-      VehicleRepo vehicleRepo, ParkingSpaceRepo parkingSpaceRepo) {
+  Future<bool> userParkingChoice(String? userInput, ParkingRepo parkingRepo,
+      VehicleRepo vehicleRepo, ParkingSpaceRepo parkingSpaceRepo) async {
     switch (userInput) {
       case "1":
-        addParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
+        await addParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
         return false;
       case "2":
-        viewAllParkings(parkingRepo);
+        await viewAllParkings(parkingRepo);
         return false;
       case "3":
-        updateParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
+        await updateParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
         return false;
       case "4":
-        deleteParking(parkingRepo);
+        await deleteParking(parkingRepo);
         return false;
       case "5":
         return true; // Exit to the main menu
@@ -48,8 +50,8 @@ class ParkingCli {
     }
   }
 
-  void addParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
-      ParkingSpaceRepo parkingSpaceRepo) {
+  Future<void> addParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+      ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("\nAnge fordonets ID: ");
     int? vehicleId = int.tryParse(userInput.getUserInput());
     if (vehicleId == null) {
@@ -80,7 +82,7 @@ class ParkingCli {
     DateTime startTime;
     try {
       startTime =
-          DateTime.parse(userInput.getUserInput()?? DateTime.now().toString());
+          DateTime.parse(userInput.getUserInput() ?? DateTime.now().toString());
     } catch (e) {
       print("Ogiltigt datumformat. Ange i formatet yyyy-mm-dd hh:mm.");
       return;
@@ -99,7 +101,6 @@ class ParkingCli {
       }
     }
 
-    // Generate a unique ID for the new parking entry
     int newId = parkingRepo.getAllParkings().isEmpty
         ? 1
         : parkingRepo
@@ -119,7 +120,7 @@ class ParkingCli {
     print("Ny parkering tillagd: ID ${newParking.id}");
   }
 
-  void viewAllParkings(ParkingRepo parkingRepo) {
+  Future<void> viewAllParkings(ParkingRepo parkingRepo) async {
     List<Parking> parkings = parkingRepo.getAllParkings();
     if (parkings.isEmpty) {
       print("Inga parkeringar hittades.");
@@ -135,8 +136,8 @@ class ParkingCli {
     }
   }
 
-  void updateParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
-      ParkingSpaceRepo parkingSpaceRepo) {
+  Future<void> updateParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
+      ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("Ange ID på parkeringen du vill uppdatera: ");
     int? id = int.tryParse(userInput.getUserInput());
     if (id == null) {
@@ -174,7 +175,7 @@ class ParkingCli {
     print("Parkering uppdaterad.");
   }
 
-  void deleteParking(ParkingRepo parkingRepo) {
+  Future<void> deleteParking(ParkingRepo parkingRepo) async {
     stdout.write("Ange ID på parkeringen du vill ta bort: ");
     int? id = int.tryParse(userInput.getUserInput());
     if (id == null) {
@@ -189,14 +190,5 @@ class ParkingCli {
 
     parkingRepo.deleteParking(id);
     print("Parkering borttagen.");
-  }
-
-  void printParkingMenu() {
-    print("\nMENY:");
-    print("1️ Lägg till parkering");
-    print("2️ Visa alla parkeringar");
-    print("3️ Uppdatera parkering");
-    print("4️ Ta bort parkering");
-    print("5️ Återgå till huvudmenyn");
   }
 }
