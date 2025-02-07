@@ -4,21 +4,25 @@ import 'package:firstapp/util/MenuUtil.dart';
 import '../model/ParkingSpace.dart';
 import '../repository/ParkingSpaceRepo.dart';
 
+// Klass för att hantera parkeringsplatser via kommandoradsgränssnitt
 class ParkingSpaceCli {
   Input userInput = Input();
   MenuUtil menuUtil = MenuUtil();
 
+  // Huvudmeny för att hantera parkeringsplatser
   Future<void> manageParkingSpaces(ParkingSpaceRepo parkingSpaceRepo) async {
     bool back = false;
 
     while (!back) {
       print("\nDu har valt att hantera parkeringsplatser. Vad vill du göra?");
-      menuUtil.printParkingSpaceMenu();
+      menuUtil.printParkingSpaceMenu(); // Skriver ut menyn
       var input = userInput.getUserInput();
+      // Hanterar användarens val
       back = await userParkingSpaceChoice(input, parkingSpaceRepo);
     }
   }
 
+  // Hanterar användarens val från menyn
   Future<bool> userParkingSpaceChoice(
       String? userInput, ParkingSpaceRepo parkingSpaceRepo) async {
     switch (userInput) {
@@ -35,13 +39,14 @@ class ParkingSpaceCli {
         await deleteParkingSpace(parkingSpaceRepo);
         return false;
       case "5":
-        return true; // Exit to the main menu
+        return true; // Gå tillbaka till huvudmenyn
       default:
         print("Ogiltigt alternativ, försök igen.");
         return false;
     }
   }
 
+  // Lägger till en ny parkeringsplats
   Future<void> addParkingSpace(ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("\nAnge adress för parkeringsplatsen: ");
     String address = userInput.getUserInput();
@@ -57,7 +62,7 @@ class ParkingSpaceCli {
       return;
     }
 
-    // Generate a unique ID
+    // Genererar ett nytt unikt ID
     int newId = parkingSpaceRepo.getAllParkingSpaces().isEmpty
         ? 1
         : parkingSpaceRepo
@@ -66,12 +71,14 @@ class ParkingSpaceCli {
                 .reduce((a, b) => a > b ? a : b) +
             1;
 
+    // Skapar en ny parkeringsplats och lägger till den i databasen
     ParkingSpace newParkingSpace =
         ParkingSpace(id: newId, address: address, pricePerHour: pricePerHour);
     parkingSpaceRepo.addParkingSpace(newParkingSpace);
     print("Ny parkeringsplats tillagd: ID ${newParkingSpace.id}");
   }
 
+  // Visar alla parkeringsplatser
   Future<void> viewAllParkingSpaces(ParkingSpaceRepo parkingSpaceRepo) async {
     List<ParkingSpace> parkingSpaces = parkingSpaceRepo.getAllParkingSpaces();
     if (parkingSpaces.isEmpty) {
@@ -85,6 +92,7 @@ class ParkingSpaceCli {
     }
   }
 
+  // Uppdaterar en befintlig parkeringsplats
   Future<void> updateParkingSpace(ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("Ange ID på parkeringsplatsen du vill uppdatera: ");
     int? id = int.tryParse(userInput.getUserInput());
@@ -93,24 +101,28 @@ class ParkingSpaceCli {
       return;
     }
 
+    // Hämtar befintlig parkeringsplats baserat på ID
     ParkingSpace? existingSpace = parkingSpaceRepo.getParkingSpaceById(id);
     if (existingSpace == null) {
       print("Ingen parkeringsplats hittades med ID $id.");
       return;
     }
 
+    // Ber användaren ange ny adress, eller behålla den gamla om fältet är tomt
     stdout.write("Ange ny adress (${existingSpace.address}): ");
     String newAddress = userInput.getUserInput();
     if (newAddress.isEmpty) {
       newAddress = existingSpace.address;
     }
 
+    // Ber användaren ange nytt pris per timme, eller behålla det gamla om fältet är tomt
     stdout.write("Ange nytt pris per timme (${existingSpace.pricePerHour}): ");
     double? newPricePerHour = double.tryParse(userInput.getUserInput());
     if (newPricePerHour == null || newPricePerHour <= 0) {
       newPricePerHour = existingSpace.pricePerHour;
     }
 
+    // Skapar en uppdaterad parkeringsplats och sparar den i databasen
     ParkingSpace updatedSpace = ParkingSpace(
         id: existingSpace.id,
         address: newAddress,
@@ -119,6 +131,7 @@ class ParkingSpaceCli {
     print("Parkeringsplats uppdaterad.");
   }
 
+  // Tar bort en parkeringsplats
   Future<void> deleteParkingSpace(ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("Ange ID på parkeringsplatsen du vill ta bort: ");
     int? id = int.tryParse(userInput.getUserInput());
@@ -127,11 +140,13 @@ class ParkingSpaceCli {
       return;
     }
 
+    // Kontrollera om parkeringsplatsen existerar innan borttagning
     if (parkingSpaceRepo.getParkingSpaceById(id) == null) {
       print("Ingen parkeringsplats hittades med ID $id.");
       return;
     }
 
+    // Tar bort parkeringsplatsen från databasen
     parkingSpaceRepo.deleteParkingSpace(id);
     print("Parkeringsplats borttagen.");
   }

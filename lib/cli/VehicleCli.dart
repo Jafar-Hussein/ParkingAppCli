@@ -6,25 +6,28 @@ import '../repository/VehicleRepo.dart';
 import '../model/Person.dart';
 import '../repository/PersonRepo.dart';
 
+// Klass för att hantera fordon via kommandoradsgränssnitt
 class VehicleCli {
   Input userInput = Input();
-  MenuUtil menuUtil = new MenuUtil();
+  MenuUtil menuUtil = MenuUtil();
 
+  // Huvudmeny för att hantera fordon
   Future<void> manageVehicles(
       VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     bool back = false;
 
     while (!back) {
       print("\nDu har valt att hantera fordon. Vad vill du göra?");
-      menuUtil.printVehicleMenu();
+      menuUtil.printVehicleMenu(); // Skriver ut menyn
       var input = userInput.getUserInput();
 
       if (await userVehicleChoice(input, vehicleRepo, personRepo)) {
-        break; // ✅ Exits the loop when "5" is pressed
+        break; // Avslutar loopen om "5" väljs
       }
     }
   }
 
+  // Hanterar användarens val från menyn
   Future<bool> userVehicleChoice(
       String? userInput, VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     switch (userInput) {
@@ -41,13 +44,14 @@ class VehicleCli {
         deleteVehicle(vehicleRepo);
         return false;
       case "5":
-        return true; // Exit to the main menu
+        return true; // Gå tillbaka till huvudmenyn
       default:
         print("Ogiltigt alternativ, försök igen.");
         return false;
     }
   }
 
+  // Lägger till ett nytt fordon
   Future<void> addVehicle(
       VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     stdout.write("\nAnge registreringsnummer: ");
@@ -71,13 +75,14 @@ class VehicleCli {
       return;
     }
 
+    // Hämtar ägaren baserat på ID
     Person? owner = personRepo.getPersonById(ownerId);
     if (owner == null) {
       print("Ingen ägare hittades med ID $ownerId.");
       return;
     }
 
-    // Generate a unique ID
+    // Genererar ett nytt unikt ID för fordonet
     int newId = vehicleRepo.getAllVehicles().isEmpty
         ? 1
         : vehicleRepo
@@ -86,6 +91,7 @@ class VehicleCli {
                 .reduce((a, b) => a > b ? a : b) +
             1;
 
+    // Skapar ett nytt fordon och lägger till det i databasen
     Vehicle newVehicle = Vehicle(
         id: newId, registreringsnummer: regNumber, type: type, owner: owner);
     vehicleRepo.addVehicle(newVehicle);
@@ -93,6 +99,7 @@ class VehicleCli {
         "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
   }
 
+  // Visar alla fordon
   void viewAllVehicles(VehicleRepo vehicleRepo) {
     List<Vehicle> vehicles = vehicleRepo.getAllVehicles();
     if (vehicles.isEmpty) {
@@ -106,6 +113,7 @@ class VehicleCli {
     }
   }
 
+  // Uppdaterar ett befintligt fordon
   void updateVehicle(VehicleRepo vehicleRepo, PersonRepo personRepo) {
     stdout.write("Ange ID på fordonet du vill uppdatera: ");
     int? id = int.tryParse(userInput.getUserInput());
@@ -114,12 +122,14 @@ class VehicleCli {
       return;
     }
 
+    // Hämtar det befintliga fordonet baserat på ID
     Vehicle? existingVehicle = vehicleRepo.getVehicleById(id);
     if (existingVehicle == null) {
       print("Inget fordon hittades med ID $id.");
       return;
     }
 
+    // Ber användaren ange nytt registreringsnummer eller behålla det befintliga
     stdout.write(
         "Ange nytt registreringsnummer (${existingVehicle.registreringsnummer}): ");
     String newRegNumber = userInput.getUserInput();
@@ -127,12 +137,14 @@ class VehicleCli {
       newRegNumber = existingVehicle.registreringsnummer;
     }
 
+    // Ber användaren ange ny fordonstyp eller behålla den befintliga
     stdout.write("Ange ny typ (${existingVehicle.type}): ");
     String newType = userInput.getUserInput();
     if (newType.isEmpty) {
       newType = existingVehicle.type;
     }
 
+    // Ber användaren ange ny ägare eller behålla den befintliga
     stdout.write("Ange ny ägarens ID (${existingVehicle.owner.id}): ");
     int? newOwnerId = int.tryParse(userInput.getUserInput());
     Person newOwner = existingVehicle.owner;
@@ -144,6 +156,7 @@ class VehicleCli {
       }
     }
 
+    // Skapar ett uppdaterat fordon och sparar det i databasen
     Vehicle updatedVehicle = Vehicle(
         id: existingVehicle.id,
         registreringsnummer: newRegNumber,
@@ -153,6 +166,7 @@ class VehicleCli {
     print("Fordon uppdaterat.");
   }
 
+  // Tar bort ett fordon
   void deleteVehicle(VehicleRepo vehicleRepo) {
     stdout.write("Ange ID på fordonet du vill ta bort: ");
     int? id = int.tryParse(userInput.getUserInput());
@@ -161,11 +175,13 @@ class VehicleCli {
       return;
     }
 
+    // Kontrollera om fordonet existerar innan borttagning
     if (vehicleRepo.getVehicleById(id) == null) {
       print("Inget fordon hittades med ID $id.");
       return;
     }
 
+    // Tar bort fordonet från databasen
     vehicleRepo.deleteVehicle(id);
     print("Fordon borttaget.");
   }

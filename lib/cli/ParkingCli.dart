@@ -10,23 +10,27 @@ import '../model/ParkingSpace.dart';
 import '../repository/ParkingSpaceRepo.dart';
 import '../model/Person.dart';
 
+// Klass för att hantera parkeringar via kommandoradsgränssnitt
 class ParkingCli {
   Input userInput = Input();
   MenuUtil menuUtil = MenuUtil();
 
+  // Huvudmeny för att hantera parkeringar
   Future<void> manageParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
       ParkingSpaceRepo parkingSpaceRepo) async {
     bool back = false;
 
     while (!back) {
       print("\nDu har valt att hantera parkeringar. Vad vill du göra?");
-      menuUtil.printParkingMenu();
+      menuUtil.printParkingMenu(); // Skriver ut parkeringsmenyn
       var input = userInput.getUserInput();
+      // Hanterar användarens val
       back = await userParkingChoice(
           input, parkingRepo, vehicleRepo, parkingSpaceRepo);
     }
   }
 
+  // Hanterar användarens val från menyn
   Future<bool> userParkingChoice(String? userInput, ParkingRepo parkingRepo,
       VehicleRepo vehicleRepo, ParkingSpaceRepo parkingSpaceRepo) async {
     switch (userInput) {
@@ -43,7 +47,7 @@ class ParkingCli {
         await deleteParking(parkingRepo);
         return false;
       case "5":
-        return true; // Exit to the main menu
+        return true; // Gå tillbaka till huvudmenyn
       default:
         print("Ogiltigt alternativ, försök igen.");
         return false;
@@ -89,7 +93,7 @@ class ParkingCli {
     }
 
     stdout.write(
-        "Ange sluttid (yyyy-mm-dd hh:mm) eller lämna tom för nuvarande parkeringar: ");
+        "Ange sluttid (yyyy-mm-dd hh:mm) eller lämna tom för pågående parkering: ");
     String? endTimeInput = userInput.getUserInput();
     DateTime? endTime;
     if (endTimeInput != null && endTimeInput.isNotEmpty) {
@@ -101,6 +105,7 @@ class ParkingCli {
       }
     }
 
+    // Genererar ett nytt unikt ID för parkeringen
     int newId = parkingRepo.getAllParkings().isEmpty
         ? 1
         : parkingRepo
@@ -109,6 +114,7 @@ class ParkingCli {
                 .reduce((a, b) => a > b ? a : b) +
             1;
 
+    // Skapar en ny parkering
     Parking newParking = Parking(
         id: newId,
         vehicle: vehicle,
@@ -116,10 +122,17 @@ class ParkingCli {
         startTime: startTime,
         endTime: endTime);
 
+    // Beräknar kostnaden
+    double cost = newParking.parkingCost();
+    newParking.price = cost;
+
+    // Lägger till parkeringen i databasen
     parkingRepo.addParking(newParking);
-    print("Ny parkering tillagd: ID ${newParking.id}");
+    print(
+        "Ny parkering tillagd: ID ${newParking.id}, Kostnad: ${cost.toStringAsFixed(2)} kr");
   }
 
+// Visar alla parkeringar inklusive parkeringskostnad
   Future<void> viewAllParkings(ParkingRepo parkingRepo) async {
     List<Parking> parkings = parkingRepo.getAllParkings();
     if (parkings.isEmpty) {
@@ -127,15 +140,18 @@ class ParkingCli {
     } else {
       print("\nLista över alla parkeringar:");
       for (var parking in parkings) {
+        double cost = parking.parkingCost(); // Beräknar parkeringskostnaden
         print('Parking ID: ${parking.id}, '
             'Registreringsnummer: ${parking.vehicle.registreringsnummer}, '
             'Parkeringsplats: ${parking.parkingSpace.address}, '
             'Start: ${parking.startTime}, '
-            'Slut: ${parking.endTime ?? "Pågående"}');
+            'Slut: ${parking.endTime ?? "Pågående"}, '
+            'Kostnad: ${cost.toStringAsFixed(2)} kr');
       }
     }
   }
 
+  // Uppdaterar en befintlig parkering
   Future<void> updateParking(ParkingRepo parkingRepo, VehicleRepo vehicleRepo,
       ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("Ange ID på parkeringen du vill uppdatera: ");
@@ -145,6 +161,7 @@ class ParkingCli {
       return;
     }
 
+    // Hämtar den befintliga parkeringen baserat på ID
     Parking? existingParking = parkingRepo.getParkingById(id);
     if (existingParking == null) {
       print("Ingen parkering hittades med ID $id.");
@@ -171,10 +188,12 @@ class ParkingCli {
       }
     }
 
+    // Uppdaterar parkeringen i databasen
     parkingRepo.updateParking(id, existingParking);
     print("Parkering uppdaterad.");
   }
 
+  // Tar bort en parkering
   Future<void> deleteParking(ParkingRepo parkingRepo) async {
     stdout.write("Ange ID på parkeringen du vill ta bort: ");
     int? id = int.tryParse(userInput.getUserInput());
@@ -183,11 +202,13 @@ class ParkingCli {
       return;
     }
 
+    // Kontrollera om parkeringen existerar innan borttagning
     if (parkingRepo.getParkingById(id) == null) {
       print("Ingen parkering hittades med ID $id.");
       return;
     }
 
+    // Tar bort parkeringen från databasen
     parkingRepo.deleteParking(id);
     print("Parkering borttagen.");
   }
