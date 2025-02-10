@@ -128,20 +128,45 @@ class ParkingCli {
         "Ny parkering tillagd: ID ${newParking.id}, Kostnad: ${cost.toStringAsFixed(2)} kr");
   }
 
-// Visar alla parkeringar inklusive parkeringskostnad
   Future<void> viewAllParkings(ParkingRepo parkingRepo) async {
+    DateTime now = DateTime.now();
     List<Parking> parkings = await parkingRepo.getAllParkings();
+
+    // Filtrera parkeringar i två listor: Aktiva och Avslutade
+    List<Parking> activeParkings =
+        parkings.where((p) => p.endTime == null).toList();
+    List<Parking> expiredParkings =
+        parkings.where((p) => p.endTime != null).toList();
+
     if (parkings.isEmpty) {
-      print("Inga parkeringar hittades.");
-    } else {
-      print("\nLista över alla parkeringar:");
-      for (var parking in parkings) {
-        double cost = parking.parkingCost(); // Beräknar parkeringskostnaden
+      print("\nInga parkeringar hittades.");
+      return;
+    }
+
+    // Visa avslutade parkeringar separat
+    if (expiredParkings.isNotEmpty) {
+      print("\nAvslutade parkeringar:");
+      for (var parking in expiredParkings) {
+        double cost = parking.parkingCost();
         print('Parking ID: ${parking.id}, '
             'Registreringsnummer: ${parking.vehicle.registreringsnummer}, '
             'Parkeringsplats: ${parking.parkingSpace.address}, '
             'Start: ${parking.startTime}, '
-            'Slut: ${parking.endTime ?? "Pågående"}, '
+            'Slut: ${parking.endTime}, '
+            'Kostnad: ${cost.toStringAsFixed(2)} kr');
+      }
+    }
+
+    // Visa aktiva parkeringar separat
+    if (activeParkings.isNotEmpty) {
+      print("\nPågående parkeringar:");
+      for (var parking in activeParkings) {
+        double cost = parking.parkingCost();
+        print('Parking ID: ${parking.id}, '
+            'Registreringsnummer: ${parking.vehicle.registreringsnummer}, '
+            'Parkeringsplats: ${parking.parkingSpace.address}, '
+            'Start: ${parking.startTime}, '
+            'Slut: Pågående, '
             'Kostnad: ${cost.toStringAsFixed(2)} kr');
       }
     }

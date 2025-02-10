@@ -37,17 +37,19 @@ class Parking {
   set endTime(DateTime? value) => _endTime = value;
   set price(double? value) => _price = value;
 
-// Metod för att beräkna parkeringskostnaden
   double parkingCost() {
-    DateTime exitTime = _endTime ?? DateTime.now();
+    DateTime now = DateTime.now();
+    DateTime exitTime =
+        _endTime ?? now; // Om parkeringen är pågående, använd nuvarande tid
+
     double durationInHours = exitTime.difference(_startTime).inMinutes / 60.0;
     double costPerHour = _parkingSpace.pricePerHour;
 
-    // Lägg till pristillägg under högtrafik (t.ex. vardagar mellan 07:00-09:00)
+    // Extra avgift under rusningstid (07:00-09:00, vardagar)
     if (_startTime.hour >= 7 &&
         _startTime.hour <= 9 &&
         _startTime.weekday <= 5) {
-      costPerHour *= 1.5; // 50% dyrare under rusningstid
+      costPerHour *= 1.5;
     }
 
     return durationInHours * costPerHour;

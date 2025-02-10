@@ -35,13 +35,13 @@ class VehicleCli {
         await addVehicle(vehicleRepo, personRepo);
         return false;
       case "2":
-        viewAllVehicles(vehicleRepo);
+        await viewAllVehicles(vehicleRepo);
         return false;
       case "3":
-        updateVehicle(vehicleRepo, personRepo);
+        await updateVehicle(vehicleRepo, personRepo);
         return false;
       case "4":
-        deleteVehicle(vehicleRepo);
+        await deleteVehicle(vehicleRepo);
         return false;
       case "5":
         return true; // Gå tillbaka till huvudmenyn
@@ -175,7 +175,7 @@ class VehicleCli {
   }
 
   // Tar bort ett fordon
-  void deleteVehicle(VehicleRepo vehicleRepo) {
+  Future<void> deleteVehicle(VehicleRepo vehicleRepo) async {
     stdout.write("Ange ID på fordonet du vill ta bort: ");
     int? id = int.tryParse(userInput.getUserInput());
     if (id == null) {
@@ -190,7 +190,7 @@ class VehicleCli {
     }
 
     // Tar bort fordonet från databasen
-    vehicleRepo.deleteVehicle(id);
+    await vehicleRepo.deleteVehicle(id);
     print("Fordon borttaget.");
   }
 }
