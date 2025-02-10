@@ -2,6 +2,12 @@ import './Repository.dart';
 import '../model/ParkingSpace.dart';
 
 class ParkingSpaceRepo extends Repository<ParkingSpace> {
+  static final ParkingSpaceRepo _instance = ParkingSpaceRepo._internal();
+
+  ParkingSpaceRepo._internal();
+
+  static ParkingSpaceRepo get instance => _instance;
+
   // Add a parking space
   void addParkingSpace(ParkingSpace space) {
     add(space.id, space);

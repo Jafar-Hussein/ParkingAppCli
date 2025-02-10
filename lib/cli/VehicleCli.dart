@@ -51,52 +51,64 @@ class VehicleCli {
     }
   }
 
-  // Lägger till ett nytt fordon
+  // Funktion för att lägga till ett nytt fordon
   Future<void> addVehicle(
       VehicleRepo vehicleRepo, PersonRepo personRepo) async {
-    stdout.write("\nAnge registreringsnummer: ");
-    String regNumber = userInput.getUserInput();
-    if (regNumber.isEmpty) {
-      print("Ogiltigt registreringsnummer. Försök igen.");
+    try {
+      // Fråga användaren att ange registreringsnummer och ta bort eventuella blanksteg
+      stdout.write("\nAnge registreringsnummer: ");
+      String regNumber = userInput.getUserInput().trim();
+      if (regNumber.isEmpty) {
+        // Om fältet är tomt, kasta ett formatundantag
+        throw FormatException("Registreringsnummer kan inte vara tomt.");
+      }
+
+      // Fråga användaren att ange typ av fordon
+      stdout.write("Ange fordonstyp (Car, Motorcycle, Truck): ");
+      String type = userInput.getUserInput().trim();
+      if (type.isEmpty) {
+        // Om fältet är tomt, kasta ett formatundantag
+        throw FormatException("Fordonstyp kan inte vara tom.");
+      }
+
+      // Fråga användaren att ange ägarens ID och försök konvertera strängen till ett heltal
+      stdout.write("Ange ägarens ID: ");
+      String ownerInput = userInput.getUserInput().trim();
+      int? ownerId = int.tryParse(ownerInput);
+      if (ownerId == null) {
+        // Om inmatningen inte kan konverteras till ett heltal, kasta ett formatundantag
+        throw FormatException("Ogiltigt ID format.");
+      }
+
+      // Hämta ägaren från repository med angivet ID
+      Person? owner = personRepo.getPersonById(ownerId);
+      if (owner == null) {
+        // Om ingen ägare hittades med ID:t, kasta ett allmänt undantag
+        throw Exception("Ingen ägare hittades med ID $ownerId.");
+      }
+
+      // Beräkna ett nytt unikt ID för fordonet baserat på befintliga ID:n
+      int newId = vehicleRepo.getAllVehicles().isEmpty
+          ? 1
+          : vehicleRepo
+                  .getAllVehicles()
+                  .map((v) => v.id)
+                  .reduce((a, b) => a > b ? a : b) +
+              1;
+
+      // Skapa ett nytt fordon med det nya ID:t och de angivna attributen
+      Vehicle newVehicle = Vehicle(
+          id: newId, registreringsnummer: regNumber, type: type, owner: owner);
+      vehicleRepo.addVehicle(newVehicle);
+
+      // Informera användaren om att ett nytt fordon har lagts till
+      print(
+          "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
+    } catch (e) {
+      // Skriv ut felmeddelandet om något går fel under processen
+      print("Fel: ${e.toString()}");
       return;
     }
-
-    stdout.write("Ange fordonstyp (Car, Motorcycle, Truck): ");
-    String type = userInput.getUserInput();
-    if (type.isEmpty) {
-      print("Ogiltig typ. Försök igen.");
-      return;
-    }
-
-    stdout.write("Ange ägarens ID: ");
-    int? ownerId = int.tryParse(userInput.getUserInput());
-    if (ownerId == null) {
-      print("Ogiltigt ID. Försök igen.");
-      return;
-    }
-
-    // Hämtar ägaren baserat på ID
-    Person? owner = personRepo.getPersonById(ownerId);
-    if (owner == null) {
-      print("Ingen ägare hittades med ID $ownerId.");
-      return;
-    }
-
-    // Genererar ett nytt unikt ID för fordonet
-    int newId = vehicleRepo.getAllVehicles().isEmpty
-        ? 1
-        : vehicleRepo
-                .getAllVehicles()
-                .map((v) => v.id)
-                .reduce((a, b) => a > b ? a : b) +
-            1;
-
-    // Skapar ett nytt fordon och lägger till det i databasen
-    Vehicle newVehicle = Vehicle(
-        id: newId, registreringsnummer: regNumber, type: type, owner: owner);
-    vehicleRepo.addVehicle(newVehicle);
-    print(
-        "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
   }
 
   // Visar alla fordon

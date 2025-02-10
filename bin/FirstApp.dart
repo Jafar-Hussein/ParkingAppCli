@@ -14,14 +14,14 @@ import 'package:firstapp/cli/ParkingSpaceCli.dart';
 import 'package:firstapp/cli/PersonCli.dart';
 import 'package:firstapp/cli/VehicleCli.dart';
 
-void main() async {  // ✅ Make main() async
-  // ✅ Initialize repositories
-  VehicleRepo vehicleRepo = VehicleRepo();
-  PersonRepo personRepo = PersonRepo();
-  ParkingSpaceRepo parkingSpaceRepo = ParkingSpaceRepo();
-  ParkingRepo parkingRepo = ParkingRepo();
+void main() async {
+  // Use Singleton instances of repositories
+  VehicleRepo vehicleRepo = VehicleRepo.instance;
+  PersonRepo personRepo = PersonRepo.instance;
+  ParkingSpaceRepo parkingSpaceRepo = ParkingSpaceRepo.instance;
+  ParkingRepo parkingRepo = ParkingRepo.instance;
 
-  // ✅ Initialize CLI managers
+  // Initialize CLI managers
   PersonCli personCli = PersonCli();
   VehicleCli vehicleCli = VehicleCli();
   ParkingSpaceCli parkingSpaceCli = ParkingSpaceCli();
@@ -40,7 +40,6 @@ void main() async {  // ✅ Make main() async
   }
 }
 
-// ✅ Now `managePersons()` and all CLI functions are properly awaited
 Future<bool> userChoice(
     String? userInput,
     PersonRepo personRepo,
@@ -50,23 +49,23 @@ Future<bool> userChoice(
     PersonCli personCli,
     VehicleCli vehicleCli,
     ParkingSpaceCli parkingSpaceCli,
-    ParkingCli parkingCli) async {  // ✅ Make function async
+    ParkingCli parkingCli) async {
   switch (userInput) {
     case "1":
-      await personCli.managePersons(personRepo);  // ✅ Use await
+      await personCli.managePersons(personRepo);
       return false;
     case "2":
-      await vehicleCli.manageVehicles(vehicleRepo, personRepo);  // ✅ Use await
+      await vehicleCli.manageVehicles(vehicleRepo, personRepo);
       return false;
     case "3":
-      await parkingSpaceCli.manageParkingSpaces(parkingSpaceRepo);  // ✅ Use await
+      await parkingSpaceCli.manageParkingSpaces(parkingSpaceRepo);
       return false;
     case "4":
-      await parkingCli.manageParking(parkingRepo, vehicleRepo, parkingSpaceRepo);  // ✅ Use await
+      await parkingCli.manageParking(parkingRepo, vehicleRepo, parkingSpaceRepo);
       return false;
     case "5":
       print("Hejdå");
-      return true;  // ✅ Properly exits without executing other menus
+      return true;
     default:
       print("Ogiltigt alternativ, försök igen.");
       return false;

@@ -39,15 +39,17 @@ class Parking {
 
 // Metod för att beräkna parkeringskostnaden
   double parkingCost() {
-    // Om sluttiden inte är angiven, anta att bilen fortfarande är parkerad och använd nuvarande tid
     DateTime exitTime = _endTime ?? DateTime.now();
-
-    // Beräknar parkeringsdurationen i timmar (konverterar från minuter till timmar)
     double durationInHours = exitTime.difference(_startTime).inMinutes / 60.0;
+    double costPerHour = _parkingSpace.pricePerHour;
 
-    // Multiplicerar antalet timmar med priset per timme för att få total kostnad
-    double totalCost = durationInHours * _parkingSpace.pricePerHour;
+    // Lägg till pristillägg under högtrafik (t.ex. vardagar mellan 07:00-09:00)
+    if (_startTime.hour >= 7 &&
+        _startTime.hour <= 9 &&
+        _startTime.weekday <= 5) {
+      costPerHour *= 1.5; // 50% dyrare under rusningstid
+    }
 
-    return totalCost;
+    return durationInHours * costPerHour;
   }
 }
