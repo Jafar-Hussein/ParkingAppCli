@@ -46,7 +46,7 @@ class ParkingSpaceCli {
     }
   }
 
-  // Lägger till en ny parkeringsplats
+// Lägger till en ny parkeringsplats asynkront
   Future<void> addParkingSpace(ParkingSpaceRepo parkingSpaceRepo) async {
     stdout.write("\nAnge adress för parkeringsplatsen: ");
     String address = userInput.getUserInput();
@@ -62,25 +62,30 @@ class ParkingSpaceCli {
       return;
     }
 
-    // Genererar ett nytt unikt ID
-    int newId = parkingSpaceRepo.getAllParkingSpaces().isEmpty
-        ? 1
-        : parkingSpaceRepo
-                .getAllParkingSpaces()
-                .map((p) => p.id)
-                .reduce((a, b) => a > b ? a : b) +
-            1;
+    // Väntar på att hämta alla parkeringsplatser asynkront
+    List<ParkingSpace> parkingSpaces =
+        await parkingSpaceRepo.getAllParkingSpaces();
 
-    // Skapar en ny parkeringsplats och lägger till den i databasen
+    // Genererar ett nytt unikt ID asynkront
+    int newId = parkingSpaces.isEmpty
+        ? 1
+        : parkingSpaces.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1;
+
+    // Skapar en ny parkeringsplats
     ParkingSpace newParkingSpace =
         ParkingSpace(id: newId, address: address, pricePerHour: pricePerHour);
-    parkingSpaceRepo.addParkingSpace(newParkingSpace);
-    print("Ny parkeringsplats tillagd: ID ${newParkingSpace.id}");
+
+    // Lägger till parkeringsplatsen asynkront
+    await parkingSpaceRepo.addParkingSpace(newParkingSpace);
+
+    print(
+        "Ny parkeringsplats tillagd: ID ${newParkingSpace.id}, Adress: $address, Pris per timme: ${pricePerHour.toStringAsFixed(2)} kr");
   }
 
   // Visar alla parkeringsplatser
   Future<void> viewAllParkingSpaces(ParkingSpaceRepo parkingSpaceRepo) async {
-    List<ParkingSpace> parkingSpaces = parkingSpaceRepo.getAllParkingSpaces();
+    List<ParkingSpace> parkingSpaces =
+        await parkingSpaceRepo.getAllParkingSpaces();
     if (parkingSpaces.isEmpty) {
       print("Inga parkeringsplatser hittades.");
     } else {
@@ -102,7 +107,8 @@ class ParkingSpaceCli {
     }
 
     // Hämtar befintlig parkeringsplats baserat på ID
-    ParkingSpace? existingSpace = parkingSpaceRepo.getParkingSpaceById(id);
+    ParkingSpace? existingSpace =
+        await parkingSpaceRepo.getParkingSpaceById(id);
     if (existingSpace == null) {
       print("Ingen parkeringsplats hittades med ID $id.");
       return;

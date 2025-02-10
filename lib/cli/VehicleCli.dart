@@ -51,7 +51,7 @@ class VehicleCli {
     }
   }
 
-  // Funktion för att lägga till ett nytt fordon
+// Funktion för att lägga till ett nytt fordon asynkront
   Future<void> addVehicle(
       VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     try {
@@ -59,7 +59,6 @@ class VehicleCli {
       stdout.write("\nAnge registreringsnummer: ");
       String regNumber = userInput.getUserInput().trim();
       if (regNumber.isEmpty) {
-        // Om fältet är tomt, kasta ett formatundantag
         throw FormatException("Registreringsnummer kan inte vara tomt.");
       }
 
@@ -67,7 +66,6 @@ class VehicleCli {
       stdout.write("Ange fordonstyp (Car, Motorcycle, Truck): ");
       String type = userInput.getUserInput().trim();
       if (type.isEmpty) {
-        // Om fältet är tomt, kasta ett formatundantag
         throw FormatException("Fordonstyp kan inte vara tom.");
       }
 
@@ -76,34 +74,31 @@ class VehicleCli {
       String ownerInput = userInput.getUserInput().trim();
       int? ownerId = int.tryParse(ownerInput);
       if (ownerId == null) {
-        // Om inmatningen inte kan konverteras till ett heltal, kasta ett formatundantag
-        throw FormatException("Ogiltigt ID format.");
+        throw FormatException("Ogiltigt ID-format.");
       }
 
-      // Hämta ägaren från repository med angivet ID
-      Person? owner = personRepo.getPersonById(ownerId);
+      // Hämta ägaren från repository med angivet ID asynkront
+      Person? owner = await personRepo.getPersonById(ownerId);
       if (owner == null) {
-        // Om ingen ägare hittades med ID:t, kasta ett allmänt undantag
         throw Exception("Ingen ägare hittades med ID $ownerId.");
       }
 
-      // Beräkna ett nytt unikt ID för fordonet baserat på befintliga ID:n
-      int newId = vehicleRepo.getAllVehicles().isEmpty
+      // Hämta alla fordon asynkront för att generera ett unikt ID
+      List<Vehicle> vehicles = await vehicleRepo.getAllVehicles();
+      int newId = vehicles.isEmpty
           ? 1
-          : vehicleRepo
-                  .getAllVehicles()
-                  .map((v) => v.id)
-                  .reduce((a, b) => a > b ? a : b) +
-              1;
+          : vehicles.map((v) => v.id).reduce((a, b) => a > b ? a : b) + 1;
 
       // Skapa ett nytt fordon med det nya ID:t och de angivna attributen
       Vehicle newVehicle = Vehicle(
           id: newId, registreringsnummer: regNumber, type: type, owner: owner);
-      vehicleRepo.addVehicle(newVehicle);
+
+      // Lägga till fordonet i databasen asynkront
+      await vehicleRepo.addVehicle(newVehicle);
 
       // Informera användaren om att ett nytt fordon har lagts till
       print(
-          "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}");
+          "Nytt fordon tillagt: ID ${newVehicle.id}, Registreringsnummer: ${newVehicle.registreringsnummer}, Ägare: ${owner.namn}");
     } catch (e) {
       // Skriv ut felmeddelandet om något går fel under processen
       print("Fel: ${e.toString()}");
@@ -112,8 +107,8 @@ class VehicleCli {
   }
 
   // Visar alla fordon
-  void viewAllVehicles(VehicleRepo vehicleRepo) {
-    List<Vehicle> vehicles = vehicleRepo.getAllVehicles();
+  Future<void> viewAllVehicles(VehicleRepo vehicleRepo) async {
+    List<Vehicle> vehicles = await vehicleRepo.getAllVehicles();
     if (vehicles.isEmpty) {
       print("Inga fordon hittades.");
     } else {
@@ -126,7 +121,8 @@ class VehicleCli {
   }
 
   // Uppdaterar ett befintligt fordon
-  void updateVehicle(VehicleRepo vehicleRepo, PersonRepo personRepo) {
+  Future<void> updateVehicle(
+      VehicleRepo vehicleRepo, PersonRepo personRepo) async {
     stdout.write("Ange ID på fordonet du vill uppdatera: ");
     int? id = int.tryParse(userInput.getUserInput());
     if (id == null) {
@@ -135,7 +131,7 @@ class VehicleCli {
     }
 
     // Hämtar det befintliga fordonet baserat på ID
-    Vehicle? existingVehicle = vehicleRepo.getVehicleById(id);
+    Vehicle? existingVehicle = await vehicleRepo.getVehicleById(id);
     if (existingVehicle == null) {
       print("Inget fordon hittades med ID $id.");
       return;
@@ -162,7 +158,7 @@ class VehicleCli {
     Person newOwner = existingVehicle.owner;
 
     if (newOwnerId != null) {
-      Person? potentialNewOwner = personRepo.getPersonById(newOwnerId);
+      Person? potentialNewOwner = await personRepo.getPersonById(newOwnerId);
       if (potentialNewOwner != null) {
         newOwner = potentialNewOwner;
       }

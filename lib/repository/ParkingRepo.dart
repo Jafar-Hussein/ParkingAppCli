@@ -6,33 +6,36 @@ import './Repository.dart';
 
 class ParkingRepo extends Repository<Parking> {
   static final ParkingRepo _instance = ParkingRepo._internal();
-
   ParkingRepo._internal();
-
   static ParkingRepo get instance => _instance;
 
-  // Existing methods...
-  void addParking(Parking parking) {
+  // Asynkron metod för att lägga till parkering
+  Future<void> addParking(Parking parking) async {
+    await Future.delayed(Duration(milliseconds: 300)); // Simulerar väntetid
     add(parking.id, parking);
   }
 
-  List<Parking> getAllParkings() {
+  // Hämtar alla parkeringar asynkront
+  Future<List<Parking>> getAllParkings() async {
+    await Future.delayed(Duration(milliseconds: 300));
     return getAll();
   }
 
-  Parking? getParkingById(int id) {
+  // Hämtar en specifik parkering baserat på ID
+  Future<Parking?> getParkingById(int id) async {
+    await Future.delayed(Duration(milliseconds: 300));
     return getById(id);
   }
 
-  void updateParking(int id, Parking parking) {
+  // Uppdaterar en parkering asynkront
+  Future<void> updateParking(int id, Parking parking) async {
+    await Future.delayed(Duration(milliseconds: 300));
     update(id, parking);
   }
 
-  void deleteParking(int id) {
+  // Tar bort en parkering asynkront
+  Future<void> deleteParking(int id) async {
+    await Future.delayed(Duration(milliseconds: 300));
     delete(id);
-  }
-
-  List<Parking> findByVehicleId(int vehicleId) {
-    return items.where((parking) => parking.vehicle.id == vehicleId).toList();
   }
 }

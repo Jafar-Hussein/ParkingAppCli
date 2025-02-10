@@ -54,39 +54,38 @@ class PersonCli {
     stdout.write("Ange personnummer: ");
     String? personnummer = userInput.getUserInput();
 
-    // Om namn och personnummer inte är null eller tomma, läggs personen till i listan
-    if (name != null &&
-        name.isNotEmpty &&
-        personnummer != null &&
-        personnummer.isNotEmpty) {
-      // Genererar ett nytt unikt ID för personen
-      int newId = personRepo.getAllPersons().isEmpty
-          ? 1 // Om listan är tom, sätt ID till 1
-          : personRepo
-                  .getAllPersons()
-                  .map((p) => p.id) // Extraherar alla ID:n
-                  .reduce((a, b) => a > b ? a : b) +
-              1; // Tar högsta ID och ökar med 1
-
-      // Skapar en ny person med det genererade ID:t, namn och personnummer
-      Person newPerson =
-          Person(id: newId, namn: name, personnummer: personnummer);
-
-      // Lägger till personen i databasen/repositoryt
-      personRepo.addPerson(newPerson);
-
-      // Bekräftelsemeddelande till användaren
-      print("Ny person tillagd: ID ${newPerson.id}, Namn: ${newPerson.namn}");
-    } else {
-      // Felmeddelande om inmatningen är ogiltig
+    // Kontrollera om namnet och personnumret är giltiga
+    if (name == null ||
+        name.isEmpty ||
+        personnummer == null ||
+        personnummer.isEmpty) {
       print("Ogiltig information, försök igen.");
+      return;
     }
+
+    // Väntar på att hämta alla personer asynkront
+    List<Person> persons = await personRepo.getAllPersons();
+
+    // Genererar ett nytt unikt ID asynkront
+    int newId = persons.isEmpty
+        ? 1
+        : persons.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1;
+
+    // Skapar en ny person
+    Person newPerson =
+        Person(id: newId, namn: name, personnummer: personnummer);
+
+    // Lägger till personen asynkront i repositoryt
+    await personRepo.addPerson(newPerson);
+
+    // Bekräftelsemeddelande till användaren
+    print("Ny person tillagd: ID ${newPerson.id}, Namn: ${newPerson.namn}");
   }
 
   //skriver ut alla persone
   Future<void> viewAllPersons(PersonRepo personRepo) async {
     //sparar alla personer i en lista
-    List<Person> persons = personRepo.getAllPersons();
+    List<Person> persons = await personRepo.getAllPersons();
     //felhantering ifall det inte finns personer
     if (persons.isEmpty) {
       print("Inga personer hittades.");
@@ -119,7 +118,7 @@ class PersonCli {
     }
 
     // Hämtar personen med det angivna ID:t för att uppdatera den specifika personen
-    Person? currentPerson = personRepo.getPersonById(id);
+    Person? currentPerson = await personRepo.getPersonById(id);
 
     // Felhantering om det inte finns någon person med det angivna ID:t
     if (currentPerson == null) {

@@ -63,7 +63,7 @@ class ParkingCli {
       return;
     }
 
-    Vehicle? vehicle = vehicleRepo.getById(vehicleId);
+    Vehicle? vehicle = await vehicleRepo.getVehicleById(vehicleId);
     if (vehicle == null) {
       print("Inget fordon hittades med ID $vehicleId");
       return;
@@ -76,7 +76,8 @@ class ParkingCli {
       return;
     }
 
-    ParkingSpace? parkingSpace = parkingSpaceRepo.getById(parkingSpaceId);
+    ParkingSpace? parkingSpace =
+        await parkingSpaceRepo.getParkingSpaceById(parkingSpaceId);
     if (parkingSpace == null) {
       print("Ingen parkeringsplats hittades med ID $parkingSpaceId");
       return;
@@ -105,16 +106,13 @@ class ParkingCli {
       }
     }
 
-    // Genererar ett nytt unikt ID för parkeringen
-    int newId = parkingRepo.getAllParkings().isEmpty
+    int newId = (await parkingRepo.getAllParkings()).isEmpty
         ? 1
-        : parkingRepo
-                .getAllParkings()
+        : (await parkingRepo.getAllParkings())
                 .map((p) => p.id)
                 .reduce((a, b) => a > b ? a : b) +
             1;
 
-    // Skapar en ny parkering
     Parking newParking = Parking(
         id: newId,
         vehicle: vehicle,
@@ -122,19 +120,17 @@ class ParkingCli {
         startTime: startTime,
         endTime: endTime);
 
-    // Beräknar kostnaden
     double cost = newParking.parkingCost();
     newParking.price = cost;
 
-    // Lägger till parkeringen i databasen
-    parkingRepo.addParking(newParking);
+    await parkingRepo.addParking(newParking);
     print(
         "Ny parkering tillagd: ID ${newParking.id}, Kostnad: ${cost.toStringAsFixed(2)} kr");
   }
 
 // Visar alla parkeringar inklusive parkeringskostnad
   Future<void> viewAllParkings(ParkingRepo parkingRepo) async {
-    List<Parking> parkings = parkingRepo.getAllParkings();
+    List<Parking> parkings = await parkingRepo.getAllParkings();
     if (parkings.isEmpty) {
       print("Inga parkeringar hittades.");
     } else {
@@ -162,7 +158,7 @@ class ParkingCli {
     }
 
     // Hämtar den befintliga parkeringen baserat på ID
-    Parking? existingParking = parkingRepo.getParkingById(id);
+    Parking? existingParking = await parkingRepo.getParkingById(id);
     if (existingParking == null) {
       print("Ingen parkering hittades med ID $id.");
       return;
