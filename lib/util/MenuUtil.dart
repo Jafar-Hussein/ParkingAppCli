@@ -5,7 +5,7 @@ class MenuUtil {
       "2️ Visa alla personer",
       "3️ Uppdatera person",
       "4️ Ta bort person",
-      "5️ Återgå till huvudmenyn"
+      "5️ Återgå till huvudmenyn\n"
     ];
     print("\n MENY:");
     options.forEach((option) => print(option));
@@ -17,7 +17,7 @@ class MenuUtil {
       "2️ Visa alla parkeringar",
       "3️ Uppdatera parkering",
       "4️ Ta bort parkering",
-      "5️ Återgå till huvudmenyn"
+      "5️ Återgå till huvudmenyn\n"
     ];
     print("\nMENY:");
     options.forEach((option) => print(option));
@@ -29,7 +29,7 @@ class MenuUtil {
       "2. Visa alla parkeringsplatser",
       "3. Uppdatera parkeringsplats",
       "4. Ta bort parkeringsplats",
-      "5. Återgå till huvudmenyn"
+      "5. Återgå till huvudmenyn\n"
     ];
     print("\nMENY:");
     options.forEach((option) => print(option));
@@ -41,7 +41,7 @@ class MenuUtil {
       "2. Visa alla fordon",
       "3. Uppdatera fordon",
       "4. Ta bort fordon",
-      "5️ Återgå till huvudmenyn"
+      "5️ Återgå till huvudmenyn\n"
     ];
     print("\nMENY:");
     options.forEach((option) => print(option));
@@ -53,7 +53,7 @@ class MenuUtil {
       "2. Fordon",
       "3. Parkeringsplatser",
       "4. Parkering",
-      "5. avsluta"
+      "5. avsluta\n"
     ];
 
     options.forEach((option) => print(option));

@@ -63,7 +63,7 @@ class VehicleCli {
       }
 
       // Fråga användaren att ange typ av fordon
-      stdout.write("Ange fordonstyp (Car, Motorcycle, Truck): ");
+      stdout.write("Ange fordonstyp (Car, Motorcycle, Truck): \n");
       String type = userInput.getUserInput().trim();
       if (type.isEmpty) {
         throw FormatException("Fordonstyp kan inte vara tom.");
